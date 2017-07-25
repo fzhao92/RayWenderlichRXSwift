@@ -154,7 +154,7 @@
 				TargetAttributes = {
 					9CE7E5D81DE5A40900C8BA5A = {
 						CreatedOnToolsVersion = 8.1;
-						DevelopmentTeam = 9MF8G8D9Y5;
+						DevelopmentTeam = H2562XJSGY;
 						ProvisioningStyle = Automatic;
 					};
 				};
@@ -374,10 +374,10 @@
 			buildSettings = {
 				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES;
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
-				DEVELOPMENT_TEAM = 9MF8G8D9Y5;
+				DEVELOPMENT_TEAM = H2562XJSGY;
 				INFOPLIST_FILE = Combinestagram/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
-				PRODUCT_BUNDLE_IDENTIFIER = com.underplot.Combinestagram;
+				PRODUCT_BUNDLE_IDENTIFIER = com.ForrestApps.Combinestagram;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_VERSION = 3.0;
 			};
@@ -389,10 +389,10 @@
 			buildSettings = {
 				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES;
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
-				DEVELOPMENT_TEAM = 9MF8G8D9Y5;
+				DEVELOPMENT_TEAM = H2562XJSGY;
 				INFOPLIST_FILE = Combinestagram/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
-				PRODUCT_BUNDLE_IDENTIFIER = com.underplot.Combinestagram;
+				PRODUCT_BUNDLE_IDENTIFIER = com.ForrestApps.Combinestagram;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_VERSION = 3.0;
 			};
