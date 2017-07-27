@@ -32,11 +32,13 @@ class MainViewController: UIViewController {
 
   private let bag = DisposeBag()
   private let images = Variable<[UIImage]>([])
+  private var imageCache = [Int]()
 
   override func viewDidLoad() {
     super.viewDidLoad()
 
     images.asObservable()
+      .throttle(0.5, scheduler: MainScheduler.instance)
       .subscribe(onNext: { [weak self] photos in
         guard let preview = self?.imagePreview else { return }
         preview.image = UIImage.collage(images: photos,
@@ -66,6 +68,7 @@ class MainViewController: UIViewController {
 
   @IBAction func actionClear() {
     images.value = []
+    imageCache = []
   }
 
   @IBAction func actionSave() {
@@ -86,16 +89,50 @@ class MainViewController: UIViewController {
     let photosViewController = storyboard!.instantiateViewController(
       withIdentifier: "PhotosViewController") as! PhotosViewController
 
-    photosViewController.selectedPhotos
+    let newPhotos = photosViewController.selectedPhotos
+      .share()
+    
+    newPhotos
+      .takeWhile({ [weak self] (image) -> Bool in
+        return (self?.images.value.count ?? 0) < 6
+      })
+      .filter({ (newImage) -> Bool in
+        return newImage.size.width > newImage.size.height
+      })
+      .filter({ [weak self] (newImage) -> Bool in
+        let len = UIImagePNGRepresentation(newImage)?.count ?? 0
+        guard self?.imageCache.contains(len) == false else {
+          return false
+        }
+        self?.imageCache.append(len)
+        return true
+      })
       .subscribe(onNext: { [weak self] newImage in
         guard let images = self?.images else { return }
         images.value.append(newImage)
-      }, onDisposed: {
-        print("completed photo selection")
+        }, onDisposed: {
+          print("completed photo selection")
+      })
+      .disposed(by: photosViewController.bag)
+    
+    newPhotos
+      .ignoreElements()
+      .subscribe(onCompleted: { [weak self] in
+        self?.updateNavigationIcon()
       })
       .disposed(by: photosViewController.bag)
 
     navigationController!.pushViewController(photosViewController, animated: true)
+  }
+  
+  func updateNavigationIcon() {
+    
+    let icon = imagePreview.image?
+      .scaled(CGSize(width: 22, height: 22))
+      .withRenderingMode(.alwaysOriginal)
+    
+    navigationItem.leftBarButtonItem = UIBarButtonItem(image: icon, style: .done, target: nil, action: nil)
+    
   }
 
   func showMessage(_ title: String, description: String? = nil) {
