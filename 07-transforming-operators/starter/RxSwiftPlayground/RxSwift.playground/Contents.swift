@@ -1,5 +1,62 @@
 //: Please build the scheme 'RxSwiftPlayground' first
+
 import RxSwift
+
+example(of: "toArray") { 
+    
+    let disposeBag = DisposeBag()
+    
+    // 1
+    Observable.of("A", "B", "C")
+        //2
+        .toArray()
+        .subscribe(onNext: {
+            print($0)
+        })
+        .disposed(by: disposeBag)
+}
+
+example(of: "map") { 
+    
+    let disposeBag = DisposeBag()
+    
+    //1
+    let formatter = NumberFormatter()
+    formatter.numberStyle = .spellOut
+    
+    //2
+    Observable<NSNumber>.of(123, 4, 56)
+        //3
+        .map {
+            formatter.string(from: $0) ?? ""
+        }
+        .subscribe(onNext: {
+            print($0)
+        })
+        .disposed(by: disposeBag)
+    
+}
+
+
+example(of: "mapWithIndex") { 
+    
+    let disposeBag = DisposeBag()
+    
+    //1
+    Observable.of(1,2,3,4,5,6)
+        //2
+        .mapWithIndex { integer, index in
+            index > 2 ? integer * 2 : integer
+        }
+        .subscribe(onNext: {
+            print($0)
+        })
+        .disposed(by: disposeBag)
+    
+}
+
+
+
 
 
 
