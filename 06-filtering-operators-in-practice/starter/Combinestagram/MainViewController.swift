@@ -36,8 +36,11 @@ class MainViewController: UIViewController {
 
   override func viewDidLoad() {
     super.viewDidLoad()
+    
+    let sharedImages = images.asObservable()
+        .share()
 
-    images.asObservable()
+    sharedImages
       .throttle(0.5, scheduler: MainScheduler.instance)
       .subscribe(onNext: { [weak self] photos in
         guard let preview = self?.imagePreview else { return }
@@ -46,7 +49,7 @@ class MainViewController: UIViewController {
       })
       .disposed(by: bag)
 
-    images.asObservable()
+    sharedImages
       .subscribe(onNext: { [weak self] photos in
         self?.updateUI(photos: photos)
       })
