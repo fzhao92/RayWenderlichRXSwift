@@ -1,0 +1,18 @@
+PODS:
+  - RxSwift (3.6.1)
+  - RxSwiftExt (2.5.1):
+    - RxSwiftExt/Core (= 2.5.1)
+  - RxSwiftExt/Core (2.5.1):
+    - RxSwift (~> 3.4)
+
+DEPENDENCIES:
+  - RxSwift (~> 3.4)
+  - RxSwiftExt
+
+SPEC CHECKSUMS:
+  RxSwift: f9de85ea20cd2f7716ee5409fc13523dc638e4e4
+  RxSwiftExt: ec25c6df68d15ad6fe326792d60452b52e83d606
+
+PODFILE CHECKSUM: 24da944186ded558c83ccdfeeef4bc59fc53ce3d
+
+COCOAPODS: 1.2.1

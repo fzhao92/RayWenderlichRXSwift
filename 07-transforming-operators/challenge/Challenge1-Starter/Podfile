@@ -2,7 +2,7 @@ use_frameworks!
 
 target 'RxSwiftPlayground' do
   pod 'RxSwift', '~> 3.4'
-  pod 'RxSwiftExt', '~> 2.4'
+  pod 'RxSwiftExt'
 end
 
 post_install do |installer|
