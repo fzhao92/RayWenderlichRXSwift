@@ -30,13 +30,22 @@ class CategoriesViewController: UIViewController, UITableViewDataSource, UITable
 
   let categories = Variable<[EOCategory]>([])
   let disposeBag = DisposeBag()
+  
+  lazy var activityIndicator: UIActivityIndicatorView = {
+    let indicator = UIActivityIndicatorView()
+    indicator.isHidden = true
+    indicator.hidesWhenStopped = true
+    return indicator
+  }()
 
   override func viewDidLoad() {
     super.viewDidLoad()
 
+    navigationItem.rightBarButtonItem = UIBarButtonItem(customView: activityIndicator)
+    
     categories
       .asObservable()
-      .subscribe(onNext: { [weak self] _ in
+      .subscribe(onNext: { [weak self](_) in
         DispatchQueue.main.async {
           self?.tableView?.reloadData()
         }
@@ -47,7 +56,9 @@ class CategoriesViewController: UIViewController, UITableViewDataSource, UITable
   }
 
   func startDownload() {
-
+    
+    activityIndicator.startAnimating()
+    
     let eoCategories = EONET.categories
     let downloadedEvents = eoCategories.flatMap { categories in
       return Observable.from(categories.map { category in
@@ -74,6 +85,11 @@ class CategoriesViewController: UIViewController, UITableViewDataSource, UITable
       .concat(updatedCategories)
       .bind(to: categories)
       .disposed(by: disposeBag)
+    
+    downloadedEvents.subscribe(onCompleted: { 
+      self.activityIndicator.stopAnimating()
+    })
+    .disposed(by: disposeBag)
   }
 
   // MARK: UITableViewDataSource
