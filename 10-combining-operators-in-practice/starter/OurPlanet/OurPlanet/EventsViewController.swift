@@ -29,10 +29,10 @@ class EventsViewController : UIViewController, UITableViewDataSource {
   @IBOutlet var slider: UISlider!
   @IBOutlet var daysLabel: UILabel!
     
-    let days = Variable<Int>(360)
-    let filteredEvents = Variable<[EOEvent]>([])
-    let events = Variable<[EOEvent]>([])
-    let disposeBag = DisposeBag()
+  let days = Variable<Int>(360)
+  let filteredEvents = Variable<[EOEvent]>([])
+  let events = Variable<[EOEvent]>([])
+  let disposeBag = DisposeBag()
 
   override func viewDidLoad() {
     super.viewDidLoad()
