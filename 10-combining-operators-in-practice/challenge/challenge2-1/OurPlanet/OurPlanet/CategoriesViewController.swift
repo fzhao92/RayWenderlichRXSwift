@@ -72,7 +72,7 @@ class CategoriesViewController: UIViewController, UITableViewDataSource, UITable
 
     let updatedCategories = eoCategories.flatMap { categories in
       downloadedEvents.scan((0,categories)) { tuple, events in
-        return (tuple.0 + 1, tuple.1.map { category in
+        return   (tuple.0 + 1, tuple.1.map { category in
           let eventsForCategory = EONET.filteredEvents(events: events, forCategory: category)
           if !eventsForCategory.isEmpty {
             var cat = category

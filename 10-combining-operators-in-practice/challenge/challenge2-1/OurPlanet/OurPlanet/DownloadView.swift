@@ -48,7 +48,7 @@ class DownloadView: UIStackView {
       label.backgroundColor = .lightGray
       label.textAlignment = .center
 
-      progress.translatesAutoresizingMaskIntoConstraints = false
+      d.translatesAutoresizingMaskIntoConstraints = false
 
       let progressWrap = UIView()
       progressWrap.translatesAutoresizingMaskIntoConstraints = false
