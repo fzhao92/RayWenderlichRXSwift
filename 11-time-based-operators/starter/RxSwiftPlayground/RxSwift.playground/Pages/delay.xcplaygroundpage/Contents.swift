@@ -29,7 +29,13 @@ _ = sourceObservable.subscribe(sourceTimeline)
 
 // Setup the delayed subscription
 // ADD CODE HERE
-
+_ = Observable<Int>
+  .timer(3, scheduler: MainScheduler.instance)
+  .flatMap { _ in
+    sourceObservable.delay(RxTimeInterval(delayInSeconds), scheduler:
+      MainScheduler.instance)
+  }
+  .subscribe(delayedTimeline)
 
 let hostView = setupHostView()
 hostView.addSubview(stack)

@@ -4,23 +4,13 @@ import RxSwift
 import RxCocoa
 
 let elementsPerSecond = 1
-let maxElements = 100
-let replayedElements = 5
-let replayDelay: TimeInterval = 3
+let maxElements = 20
+let replayedElements = 3
+let replayDelay: TimeInterval = 4
 
-let sourceObservable = Observable<Int>.create { (observer) -> Disposable in
-    var value = 1
-    let timer = DispatchSource.timer(interval: 1.0 / Double(elementsPerSecond), queue: .main, handler: { 
-        if value <= maxElements {
-            observer.onNext(value)
-            value = value + 1
-        }
-    })
-    return Disposables.create {
-        timer.suspend()
-    }
-}
-.replayAll()
+let sourceObservable = Observable<Int>
+  .interval(RxTimeInterval(elementsPerSecond), scheduler: MainScheduler.instance)
+  .replay(replayedElements)
 
 let sourceTimeline = TimelineView<Int>.make()
 let replayedTimeline = TimelineView<Int>.make()

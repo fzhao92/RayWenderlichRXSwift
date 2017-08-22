@@ -6,7 +6,7 @@ import RxCocoa
 
 
 let bufferTimeSpan: RxTimeInterval = 4
-let bufferMaxCount: Int = 2
+let bufferMaxCount: Int = 3
 
 let sourceObservable = PublishSubject<String>()
 let sourceTimeline = TimelineView<String>.make()
@@ -36,7 +36,7 @@ hostView
 //    sourceObservable.onNext("🐱")
 //}
 
-let elementsPerSecond = 0.7
+let elementsPerSecond = 1.0
 let timer = DispatchSource.timer(interval: 1.0 / Double(elementsPerSecond), queue: .main) { 
     sourceObservable.onNext("🐱")
 }
