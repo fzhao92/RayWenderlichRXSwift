@@ -31,12 +31,48 @@ class ViewController: UIViewController {
   @IBOutlet weak var humidityLabel: UILabel!
   @IBOutlet weak var iconLabel: UILabel!
   @IBOutlet weak var cityNameLabel: UILabel!
+  @IBOutlet weak var scaleSwitch: UISwitch!
+  @IBOutlet weak var scaleLabel: UILabel!
+  
+  let bag = DisposeBag()
 
   override func viewDidLoad() {
     super.viewDidLoad()
     // Do any additional setup after loading the view, typically from a nib.
 
     style()
+    
+    let searchText = searchCityName.rx.controlEvent(.editingDidEndOnExit).asObservable()
+    let temperature = scaleSwitch.rx.controlEvent(.valueChanged).asObservable()
+    
+    let search = Observable.from([searchText, temperature])
+      .merge()
+      .map( { self.searchCityName.text } )
+      .flatMap({ (text) in
+        return ApiController.shared.currentWeather(city: text ?? "Error")
+      })
+      .asDriver(onErrorJustReturn: ApiController.Weather.empty)
+    
+    search.map { w in
+      if self.scaleSwitch.isOn {
+        return "\(Int(Double(w.temperature) * 1.8 + 32))° F"
+      }
+      return "\(w.temperature)° C"
+      }
+      .drive(tempLabel.rx.text)
+      .disposed(by:bag)
+    
+    search.map( { $0.icon })
+      .drive(iconLabel.rx.text)
+      .disposed(by: bag)
+    
+    search.map( { "\($0.humidity)%" } )
+      .drive(humidityLabel.rx.text)
+      .disposed(by: bag)
+    
+    search.map( { $0.cityName })
+      .drive(cityNameLabel.rx.text)
+      .disposed(by: bag)
 
   }
 
