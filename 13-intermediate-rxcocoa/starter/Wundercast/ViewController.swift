@@ -24,6 +24,7 @@ import UIKit
 import RxSwift
 import RxCocoa
 import MapKit
+import CoreLocation
 
 class ViewController: UIViewController {
 
@@ -38,21 +39,96 @@ class ViewController: UIViewController {
   @IBOutlet weak var cityNameLabel: UILabel!
 
   let bag = DisposeBag()
+  
+  let locationManager = CLLocationManager()
 
   override func viewDidLoad() {
     super.viewDidLoad()
-    // Do any additional setup after loading the view, typically from a nib.
-
-    style()
-
-    let search = searchCityName.rx.controlEvent(.editingDidEndOnExit).asObservable()
-      .map { self.searchCityName.text }
-      .filter { ($0 ?? "").characters.count > 0 }
-      .flatMap { text in
-        return ApiController.shared.currentWeather(city: text ?? "Error")
-          .catchErrorJustReturn(ApiController.Weather.dummy)
+    
+    locationManager.rx.didUpdateLocations
+      .subscribe(onNext: { (locations) in
+        print(locations)
+      })
+      .disposed(by: bag)
+    
+    let currentLocation = locationManager.rx.didUpdateLocations
+      .map { (locations) in
+        return locations[0]
       }
-      .asDriver(onErrorJustReturn: ApiController.Weather.dummy)
+      .filter { (location) in
+        return location.horizontalAccuracy < kCLLocationAccuracyHundredMeters
+      }
+    
+    let geoInput = geoLocationButton.rx.tap.asObservable()
+      .do(onNext: {
+        self.locationManager.requestWhenInUseAuthorization()
+        self.locationManager.startUpdatingLocation()
+      })
+    
+    let geoLocation = geoInput.flatMap {
+      return currentLocation.take(1)
+    }
+    
+    let geoSearch = geoLocation.flatMap { (location) in
+      return ApiController.shared.currentWeather(lat:
+        location.coordinate.latitude, lon: location.coordinate.longitude)
+          .catchErrorJustReturn(ApiController.Weather.dummy)
+    }
+    
+    style()
+    
+    let searchInput =
+    searchCityName.rx.controlEvent(.editingDidEndOnExit).asObservable()
+      .map({ self.searchCityName.text })
+      .filter({ ($0 ?? "").characters.count > 0 })
+    
+    let textSearch = searchInput.flatMap { (text) in
+      return ApiController.shared.currentWeather(city: text ?? "Error")
+        .catchErrorJustReturn(ApiController.Weather.dummy)
+    }
+    
+    mapButton.rx.tap
+      .subscribe(onNext: {
+        self.mapView.isHidden = !self.mapView.isHidden
+      })
+      .disposed(by: bag)
+    
+    mapView.rx.setDelegate(self)
+      .disposed(by: bag)
+    
+    let mapInput = mapView.rx.regionDidChangeAnimated
+      .skip(1)
+      .map { (_) in
+        self.mapView.centerCoordinate
+    }
+    
+    let mapSearch = mapInput.flatMap { (coordinate) in
+      return ApiController.shared.currentWeather(lat: coordinate.latitude, lon: coordinate.longitude)
+        .catchErrorJustReturn(ApiController.Weather.dummy)
+    }
+    
+    let search = Observable.from([geoSearch,
+                                  textSearch,
+                                  mapSearch])
+                           .merge()
+                           .asDriver(onErrorJustReturn: ApiController.Weather.dummy)
+    
+    search.map({ [$0.overlay()] })
+      .drive(mapView.rx.overlays)
+      .disposed(by: bag)
+    
+    let running = Observable.from([searchInput.map({ _ in true }),
+                                   geoInput.map({ _ in true }),
+                                   mapInput.map({ _ in true }),
+                                   search.map({ _ in false }).asObservable()])
+                            .merge()
+                            .startWith(true)
+                            .asDriver(onErrorJustReturn: false)
+    
+    running
+      .skip(1)
+      .drive(activityIndicator.rx.isAnimating)
+      .disposed(by: bag)
 
     search.map { "\($0.temperature)° C" }
       .drive(tempLabel.rx.text)
@@ -69,7 +145,6 @@ class ViewController: UIViewController {
     search.map { $0.cityName }
       .drive(cityNameLabel.rx.text)
       .disposed(by: bag)
-
   }
 
   override func viewDidAppear(_ animated: Bool) {
@@ -101,5 +176,18 @@ class ViewController: UIViewController {
     iconLabel.textColor = UIColor.cream
     cityNameLabel.textColor = UIColor.cream
   }
+  
+}
+
+extension ViewController: MKMapViewDelegate {
+  
+  func mapView(_ mapView: MKMapView, rendererFor overlay: MKOverlay) -> MKOverlayRenderer {
+    if let overlay = overlay as? ApiController.Weather.Overlay {
+      let overlayView = ApiController.Weather.OverlayView(overlay: overlay, overlayIcon: overlay.icon)
+      return overlayView
+    }
+    return MKOverlayRenderer()
+  }
+  
 }
 
