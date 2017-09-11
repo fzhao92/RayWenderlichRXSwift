@@ -107,6 +107,11 @@ class ViewController: UIViewController {
         .catchErrorJustReturn(ApiController.Weather.dummy)
     }
     
+    let surroundingMapSearch = mapInput.flatMap { (coordinate) in
+      return ApiController.shared.currentWeatherAround(lat: coordinate.latitude, lon: coordinate.longitude)
+        .catchErrorJustReturn([ApiController.Weather.dummy])
+    }
+    
     let search = Observable.from([geoSearch,
                                   textSearch,
                                   mapSearch])
@@ -158,7 +163,7 @@ class ViewController: UIViewController {
       .disposed(by: bag)
     
     // Challenge 2
-    
+
     mapInput.flatMap { (location) in
       return ApiController.shared.currentWeatherAround(lat: location.latitude, lon: location.longitude)
         .catchErrorJustReturn([])
