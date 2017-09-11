@@ -69,4 +69,12 @@ extension Reactive where Base: MKMapView {
     return ControlEvent(events: source)
   }
   
+  // Challenge 1
+  
+  var givenLocation: UIBindingObserver<Base, CLLocationCoordinate2D> {
+    return UIBindingObserver(UIElement: self.base, binding: { (mapView, coordinate) in
+      mapView.setCenter(coordinate, animated: true)
+    })
+  }
+  
 }

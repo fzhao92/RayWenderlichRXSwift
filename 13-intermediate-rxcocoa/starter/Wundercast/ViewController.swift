@@ -113,6 +113,17 @@ class ViewController: UIViewController {
                            .merge()
                            .asDriver(onErrorJustReturn: ApiController.Weather.dummy)
     
+    // Challenge 1
+    
+    let geoAndTextSearch = Observable.from([geoSearch, textSearch])
+                                     .merge()
+                                     .asDriver(onErrorJustReturn: ApiController.Weather.dummy)
+    
+    
+    geoAndTextSearch.map({ $0.coordinate })
+      .drive(mapView.rx.givenLocation)
+      .disposed(by: bag)
+    
     search.map({ [$0.overlay()] })
       .drive(mapView.rx.overlays)
       .disposed(by: bag)
