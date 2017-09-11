@@ -73,7 +73,8 @@ extension Reactive where Base: MKMapView {
   
   var givenLocation: UIBindingObserver<Base, CLLocationCoordinate2D> {
     return UIBindingObserver(UIElement: self.base, binding: { (mapView, coordinate) in
-      mapView.setCenter(coordinate, animated: true)
+      let span = MKCoordinateSpan(latitudeDelta: 2, longitudeDelta: 2)
+      mapView.region = MKCoordinateRegion(center: coordinate, span: span)
     })
   }
   

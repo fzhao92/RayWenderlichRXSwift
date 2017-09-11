@@ -107,6 +107,11 @@ class ViewController: UIViewController {
         .catchErrorJustReturn(ApiController.Weather.dummy)
     }
     
+    let surroundingMapSearch = mapInput.flatMap { (coordinate) in
+      return ApiController.shared.currentWeatherAround(lat: coordinate.latitude, lon: coordinate.longitude)
+        .catchErrorJustReturn([ApiController.Weather.dummy])
+    }
+    
     let search = Observable.from([geoSearch,
                                   textSearch,
                                   mapSearch])
@@ -156,6 +161,16 @@ class ViewController: UIViewController {
     search.map { $0.cityName }
       .drive(cityNameLabel.rx.text)
       .disposed(by: bag)
+    
+    mapInput.flatMap { (location) in
+      return ApiController.shared.currentWeatherAround(lat: location.latitude, lon: location.longitude)
+        .catchErrorJustReturn([])
+      }
+      .asDriver(onErrorJustReturn: [])
+      .map({ $0.map({ $0.overlay() }) })
+      .drive(mapView.rx.overlays)
+      .disposed(by: bag)
+    
   }
 
   override func viewDidAppear(_ animated: Bool) {
