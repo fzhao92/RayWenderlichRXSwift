@@ -72,6 +72,20 @@ class ApiController {
       )
     }
   }
+  
+  func currentWeatherAround(lat: Double, lon: Double) -> Observable<[Weather]> {
+    var weathers: [Observable<Weather>] = [Observable<Weather>]()
+    
+    for i in -1...1 {
+      for j in -1...1 {
+        weathers.append(currentWeather(lat: lat + Double(i), lon: lon + Double(j)))
+      }
+    }
+    
+    return Observable.from(weathers)
+                     .merge()
+                     .toArray()
+  }
 
   //MARK: - Private Methods
 

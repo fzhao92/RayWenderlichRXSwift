@@ -113,17 +113,6 @@ class ViewController: UIViewController {
                            .merge()
                            .asDriver(onErrorJustReturn: ApiController.Weather.dummy)
     
-    // Challenge 1
-    
-    let geoAndTextSearch = Observable.from([geoSearch, textSearch])
-                                     .merge()
-                                     .asDriver(onErrorJustReturn: ApiController.Weather.dummy)
-    
-    
-    geoAndTextSearch.map({ $0.coordinate })
-      .drive(mapView.rx.givenLocation)
-      .disposed(by: bag)
-    
     search.map({ [$0.overlay()] })
       .drive(mapView.rx.overlays)
       .disposed(by: bag)
@@ -156,6 +145,29 @@ class ViewController: UIViewController {
     search.map { $0.cityName }
       .drive(cityNameLabel.rx.text)
       .disposed(by: bag)
+    
+    // Challenge 1
+    
+    let geoAndTextSearch = Observable.from([geoSearch, textSearch])
+      .merge()
+      .asDriver(onErrorJustReturn: ApiController.Weather.dummy)
+    
+    
+    geoAndTextSearch.map({ $0.coordinate })
+      .drive(mapView.rx.givenLocation)
+      .disposed(by: bag)
+    
+    // Challenge 2
+    
+    mapInput.flatMap { (location) in
+      return ApiController.shared.currentWeatherAround(lat: location.latitude, lon: location.longitude)
+        .catchErrorJustReturn([])
+      }
+      .asDriver(onErrorJustReturn: [])
+      .map({ $0.map({ $0.overlay() }) })
+      .drive(mapView.rx.overlays)
+      .disposed(by: bag)
+    
   }
 
   override func viewDidAppear(_ animated: Bool) {
