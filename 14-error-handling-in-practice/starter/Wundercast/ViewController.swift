@@ -44,13 +44,17 @@ class ViewController: UIViewController {
   let locationManager = CLLocationManager()
 
   var keyTextField: UITextField?
+  
+  var cache = [String: Weather]()
 
   override func viewDidLoad() {
     super.viewDidLoad()
     // Do any additional setup after loading the view, typically from a nib.
-
+    
     style()
 
+    _ = RxReachability.shared.startMonitor("openweathermap.org")
+    
     keyButton.rx.tap.subscribe(onNext: {
       self.requestKey()
     }).disposed(by:bag)
@@ -78,14 +82,59 @@ class ViewController: UIViewController {
       return ApiController.shared.currentWeather(lat: location.coordinate.latitude, lon: location.coordinate.longitude)
         .catchErrorJustReturn(ApiController.Weather.empty)
     }
+    
+    let maxAttempts = 4
+    
+    let retryHandler: (Observable<Error>) -> Observable<Int> = { e in
+      return e.flatMapWithIndex({ (error, attempt) -> Observable<Int> in
+        if (error as NSError).code == -1009 {
+          return RxReachability.shared.status
+            .filter({ $0 == .online })
+            .map({ _ in return 1})
+        }
+        else if attempt >= maxAttempts - 1 {
+          return Observable.error(error)
+        }
+        else if let casted = error as? ApiController.ApiError, casted == .invalidKey {
+          return ApiController.shared.apiKey
+            .filter({ $0 != ""})
+            .map({ _ in return 1 })
+        }
+        print("== retrying after \(attempt + 1) seconds ==")
+        return Observable<Int>.timer(Double(attempt + 1), scheduler: MainScheduler.instance)
+          .take(1)
+      })
+    }
 
     let searchInput = searchCityName.rx.controlEvent(.editingDidEndOnExit).asObservable()
       .map { self.searchCityName.text }
       .filter { ($0 ?? "").characters.count > 0 }
-
+    
     let textSearch = searchInput.flatMap { text in
       return ApiController.shared.currentWeather(city: text ?? "Error")
-        .catchErrorJustReturn(ApiController.Weather.empty)
+        .do(onNext: { data in
+          if let text = text {
+            self.cache[text] = data
+          }
+        })
+        .do(onNext: { (data) in
+          if let text = text {
+            self.cache[text] = data
+          }
+        }, onError: { [weak self] (e) in
+          guard let strongSelf = self else { return }
+          DispatchQueue.main.async {
+            strongSelf.showError(error: e)
+          }
+        })
+        .retryWhen(retryHandler)
+        .catchError { error in
+          if let text = text, let cachedData = self.cache[text] {
+            return Observable.just(cachedData)
+          } else {
+            return Observable.just(ApiController.Weather.empty)
+          }
+        }
     }
 
     let search = Observable.from([geoSearch, textSearch])
@@ -161,6 +210,21 @@ class ViewController: UIViewController {
     alert.addAction(UIAlertAction(title: "Cancel", style: UIAlertActionStyle.destructive))
 
     self.present(alert, animated: true)
+  }
+  
+  func showError(error e: Error) {
+    if let e = e as? ApiController.ApiError {
+      switch e {
+      case.cityNotFound:
+        InfoView.showIn(viewController: self, message: "City Name is invalid")
+      case .serverFailure:
+        InfoView.showIn(viewController: self, message: "Server error")
+      case .invalidKey:
+        InfoView.showIn(viewController: self, message: "Key is invalid")
+      }
+    } else {
+      InfoView.showIn(viewController: self, message: "An error occurred")
+    }
   }
 
   // MARK: - Style
